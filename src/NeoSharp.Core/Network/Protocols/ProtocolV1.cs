@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Extensions;
 using NeoSharp.Core.Messaging;
@@ -38,8 +36,7 @@ namespace NeoSharp.Core.Network.Protocols
             _magic = config.Magic;
         }
 
-        public override async Task SendMessageAsync(Stream stream, Message message,
-            CancellationToken cancellationToken)
+        public override void SendMessage(Stream stream, Message message)
         {
             using (var memory = new MemoryStream())
             using (var writer = new BinaryWriter(memory, Encoding.UTF8))
@@ -57,13 +54,13 @@ namespace NeoSharp.Core.Network.Protocols
                 writer.Flush();
 
                 var buffer = memory.ToArray();
-                await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+                stream.Write(buffer, 0, buffer.Length);
             }
         }
 
-        public override async Task<Message> ReceiveMessageAsync(Stream stream, CancellationToken cancellationToken)
+        public override Message ReceiveMessage(Stream stream)
         {
-            var buffer = await FillBufferAsync(stream, 24, cancellationToken);
+            var buffer = FillBufferAsync(stream, 24);
 
             using (var memory = new MemoryStream(buffer, false))
             using (var reader = new BinaryReader(memory, Encoding.UTF8))
@@ -86,7 +83,7 @@ namespace NeoSharp.Core.Network.Protocols
                 var checksum = reader.ReadUInt32();
 
                 var payloadBuffer = payloadLength > 0
-                    ? await FillBufferAsync(stream, (int)payloadLength, cancellationToken)
+                    ? FillBufferAsync(stream, (int)payloadLength)
                     : new byte[0];
 
                 if (CalculateChecksum(payloadBuffer) != checksum)

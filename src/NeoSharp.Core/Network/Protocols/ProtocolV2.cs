@@ -2,8 +2,6 @@
 using System.IO;
 using System.IO.Compression;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using NeoSharp.BinarySerialization;
 using NeoSharp.Core.Messaging;
 using NeoSharp.Types.ExtensionMethods;
@@ -42,8 +40,7 @@ namespace NeoSharp.Core.Network.Protocols
             return m.Flags.HasFlag(MessageFlags.Urgent) || base.IsHighPriorityMessage(m);
         }
 
-        public override async Task SendMessageAsync(Stream stream, Message message,
-            CancellationToken cancellationToken)
+        public override void SendMessage(Stream stream, Message message)
         {
             using (var memory = new MemoryStream())
             using (var writer = new BinaryWriter(memory, Encoding.UTF8))
@@ -85,13 +82,13 @@ namespace NeoSharp.Core.Network.Protocols
                 writer.Flush();
 
                 var buffer = memory.ToArray();
-                await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+                stream.Write(buffer, 0, buffer.Length);
             }
         }
 
-        public override async Task<Message> ReceiveMessageAsync(Stream stream, CancellationToken cancellationToken)
+        public override Message ReceiveMessage(Stream stream)
         {
-            var buffer = await FillBufferAsync(stream, 6, cancellationToken);
+            var buffer = FillBufferAsync(stream, 6);
 
             // TODO #366: Remove this magic in V2, only for handshake
             if (buffer.ToInt32(0) != _magic)
@@ -112,7 +109,7 @@ namespace NeoSharp.Core.Network.Protocols
 
             if (message.Flags.HasFlag(MessageFlags.WithPayload))
             {
-                buffer = await FillBufferAsync(stream, 4, cancellationToken);
+                buffer = FillBufferAsync(stream, 4);
 
                 var payloadLength = buffer.ToInt32(0);
                 if (payloadLength > Message.PayloadMaxSize)
@@ -121,7 +118,7 @@ namespace NeoSharp.Core.Network.Protocols
                 }
 
                 var payloadBuffer = payloadLength > 0
-                    ? await FillBufferAsync(stream, (int)payloadLength, cancellationToken)
+                    ? FillBufferAsync(stream, (int)payloadLength)
                     : new byte[0];
 
                 if (message is ICarryPayload messageWithPayload)

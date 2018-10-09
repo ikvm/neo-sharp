@@ -171,9 +171,9 @@ namespace NeoSharp.Core.Network.Tcp
                     }
 
                     //TODO #422
-                    if (message.Command != MessageCommand.consensus)	
-                    {	
-                        await InternalSend(message);	
+                    if (message.Command != MessageCommand.consensus)
+                    {
+                        await InternalSend(message);
                     }
                 }
             },
@@ -214,26 +214,22 @@ namespace NeoSharp.Core.Network.Tcp
         /// Receive message
         /// </summary>
         /// <returns>Message</returns>
-        public async Task<Message> Receive()
+        public Task<Message> Receive()
         {
             if (!IsConnected) return null;
 
-            using (var tokenSource = new CancellationTokenSource(SocketOperationTimeout))
+            try
             {
-                tokenSource.Token.Register(Disconnect);
+                var msg = _protocol.ReceiveMessage(_stream);
+                _logger.LogDebug($"Message Received: {msg.Command}");
 
-                try
-                {
-                    var msg = await _protocol.ReceiveMessageAsync(_stream, tokenSource.Token);
-                    _logger.LogDebug($"Message Received: {msg.Command}");
-                    return msg;
-                }
-                catch (Exception err)
-                {
-                    _logger.LogError(err, "Error while receive");
+                return Task.FromResult(msg);
+            }
+            catch (Exception err)
+            {
+                _logger.LogError(err, "Error while receive");
 
-                    Disconnect();
-                }
+                Disconnect();
             }
 
             return null;
@@ -258,25 +254,23 @@ namespace NeoSharp.Core.Network.Tcp
         /// </summary>
         /// <param name="message">Message</param>
         /// <returns>Async task</returns>
-        private async Task InternalSend(Message message)
+        private Task InternalSend(Message message)
         {
-            if (!IsConnected) return;
+            if (!IsConnected) return Task.CompletedTask;
 
-            using (var tokenSource = new CancellationTokenSource(SocketOperationTimeout))
+            try
             {
-                tokenSource.Token.Register(Disconnect);
+                _logger.LogDebug($"Message sent: {message.Command} to {EndPoint.Host}.");
 
-                try
-                {
-                    _logger.LogDebug($"Message sent: {message.Command} to {EndPoint.Host}.");
-                    await _protocol.SendMessageAsync(_stream, message, tokenSource.Token);
-                }
-                catch (Exception err)
-                {
-                    _logger.LogError(err, $"Error while send message {message.Command} to {EndPoint.Host}.");
-                    Disconnect();
-                }
+                _protocol.SendMessage(_stream, message);
             }
+            catch (Exception err)
+            {
+                _logger.LogError(err, $"Error while send message {message.Command} to {EndPoint.Host}.");
+                Disconnect();
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>

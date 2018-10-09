@@ -22,7 +22,7 @@ namespace NeoSharp.Core.Test.Network.Protocols
         }
 
         [TestMethod]
-        public async Task Can_serialize_and_deserialize_messages()
+        public void Can_serialize_and_deserialize_messages()
         {
             // Arrange 
             var tcpProtocol = AutoMockContainer.Create<ProtocolV1>();
@@ -32,9 +32,9 @@ namespace NeoSharp.Core.Test.Network.Protocols
             // Act
             using (var memory = new MemoryStream())
             {
-                await tcpProtocol.SendMessageAsync(memory, expectedVerAckMessage, CancellationToken.None);
+                tcpProtocol.SendMessage(memory, expectedVerAckMessage);
                 memory.Seek(0, SeekOrigin.Begin);
-                actualVerAckMessage = (VerAckMessage)await tcpProtocol.ReceiveMessageAsync(memory, CancellationToken.None);
+                actualVerAckMessage = (VerAckMessage)tcpProtocol.ReceiveMessage(memory);
             }
 
             // Assert
@@ -47,18 +47,18 @@ namespace NeoSharp.Core.Test.Network.Protocols
         }
 
         [TestMethod]
-        public async Task Can_serialize_and_deserialize_messages_with_payload()
+        public void Can_serialize_and_deserialize_messages_with_payload()
         {
             // Arrange 
             var versionPayload = new VersionPayload
             {
-                Version = (uint)this.RandomInt(0, int.MaxValue),
-                Services = (ulong)this.RandomInt(0, int.MaxValue),
+                Version = (uint)RandomInt(0, int.MaxValue),
+                Services = (ulong)RandomInt(0, int.MaxValue),
                 Timestamp = DateTime.UtcNow.ToTimestamp(),
-                Port = (ushort)this.RandomInt(0, short.MaxValue),
-                Nonce = (uint)this.RandomInt(0, int.MaxValue),
-                UserAgent = $"/NEO:{this.RandomInt(1, 10)}.{this.RandomInt(1, 100)}.{this.RandomInt(1, 1000)}/",
-                CurrentBlockIndex = (uint)this.RandomInt(0, int.MaxValue),
+                Port = (ushort)RandomInt(0, short.MaxValue),
+                Nonce = (uint)RandomInt(0, int.MaxValue),
+                UserAgent = $"/NEO:{RandomInt(1, 10)}.{RandomInt(1, 100)}.{RandomInt(1, 1000)}/",
+                CurrentBlockIndex = (uint)RandomInt(0, int.MaxValue),
                 Relay = false
             };
 
@@ -69,9 +69,9 @@ namespace NeoSharp.Core.Test.Network.Protocols
             // Act
             using (var memory = new MemoryStream())
             {
-                await tcpProtocol.SendMessageAsync(memory, expectedVersionMessage, CancellationToken.None);
+                tcpProtocol.SendMessage(memory, expectedVersionMessage);
                 memory.Seek(0, SeekOrigin.Begin);
-                actualVersionMessage = (VersionMessage)await tcpProtocol.ReceiveMessageAsync(memory, CancellationToken.None);
+                actualVersionMessage = (VersionMessage)tcpProtocol.ReceiveMessage(memory);
             }
 
             // Assert

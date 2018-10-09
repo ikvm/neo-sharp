@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using NeoSharp.Core.Caching;
 using NeoSharp.Core.Messaging;
 using NeoSharp.Core.Messaging.Messages;
@@ -31,8 +29,7 @@ namespace NeoSharp.Core.Network.Protocols
         /// </summary>
         /// <param name="stream">Stream</param>
         /// <param name="message">Message</param>
-        /// <param name="cancellationToken">Cancel token</param>
-        public abstract Task SendMessageAsync(Stream stream, Message message, CancellationToken cancellationToken);
+        public abstract void SendMessage(Stream stream, Message message);
 
         public virtual bool IsHighPriorityMessage(Message m)
         {
@@ -43,14 +40,10 @@ namespace NeoSharp.Core.Network.Protocols
         /// Receive message
         /// </summary>
         /// <param name="stream">Stream</param>
-        /// <param name="cancellationToken">Cancel token</param>
         /// <returns>Return message or NULL</returns>
-        public abstract Task<Message> ReceiveMessageAsync(Stream stream, CancellationToken cancellationToken);
+        public abstract Message ReceiveMessage(Stream stream);
 
-        protected static async Task<byte[]> FillBufferAsync(
-            Stream stream,
-            int size,
-            CancellationToken cancellationToken)
+        protected static byte[] FillBufferAsync(Stream stream, int size)
         {
             var buffer = new byte[Math.Min(size, MaxBufferSize)];
 
@@ -60,7 +53,7 @@ namespace NeoSharp.Core.Network.Protocols
                 {
                     var count = Math.Min(size, buffer.Length);
 
-                    count = await stream.ReadAsync(buffer, 0, count, cancellationToken);
+                    count = stream.Read(buffer, 0, count);
                     if (count <= 0) throw new IOException();
 
                     memory.Write(buffer, 0, count);
