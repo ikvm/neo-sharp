@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using NeoSharp.Core.Blockchain.Repositories;
 using NeoSharp.Core.Logging;
@@ -50,6 +51,8 @@ namespace NeoSharp.Core.Blockchain.Processing
             {
                 var blockHeader = await _blockRepository.GetBlockHeader(block.Hash);
 
+                // TODO [AboimPinto]: All this should be in one transaction
+
                 if (blockHeader == null ||
                     blockHeader.Type == HeaderType.Header && blockHeader.Hash.Equals(block.Hash))
                 {
@@ -62,16 +65,25 @@ namespace NeoSharp.Core.Blockchain.Processing
                         await _blockHeaderPersister.Persist(block.GetBlockHeader());
                     }
 
+                    this._logger.LogDebug($"The block {block.Index} with hash {block.Hash} was persisted.");
+
                     if (index + 1 == block.Index)
                     {
                         await _blockRepository.SetTotalBlockHeight(block.Index);
                         index = block.Index;
                     }
 
-                    foreach (var transaction in block.Transactions)
+                    try
                     {
-                        await _transactionPersister.Persist(transaction);
-                        _transactionPool.Remove(transaction.Hash);
+                        foreach (var transaction in block.Transactions)
+                        {
+                            await _transactionPersister.Persist(transaction);
+                            _transactionPool.Remove(transaction.Hash);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        this._logger.LogError(ex, $"There was an error persisting transaction of the block {block.Hash} with Index {block.Index}");
                     }
 
                     _blockchainContext.CurrentBlock = block;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -57,6 +58,8 @@ namespace NeoSharp.Core.Network.Tcp
             set => _isReady = value;
         }
 
+        public DateTime ConnectionDate { get; }
+
         #endregion
 
         #region Variables
@@ -89,6 +92,7 @@ namespace NeoSharp.Core.Network.Tcp
 
             _stream = new NetworkStream(socket, true);
             _protocol = protocolSelector.DefaultProtocol;
+            ConnectionDate = DateTime.UtcNow;
 
             // Extract address
 
@@ -216,21 +220,25 @@ namespace NeoSharp.Core.Network.Tcp
         /// <returns>Message</returns>
         public Task<Message> Receive()
         {
-            if (!IsConnected) return null;
+            // if (!IsConnected) return null;
 
-            try
-            {
-                var msg = _protocol.ReceiveMessage(_stream);
-                _logger.LogDebug($"Message Received: {msg.Command}");
+            // var msg = _protocol.ReceiveMessage(_stream);
+            // _logger.LogDebug($"Message Received: {msg.Command}");
 
-                return Task.FromResult(msg);
-            }
-            catch (Exception err)
-            {
-                _logger.LogError(err, "Error while receive");
-
-                Disconnect();
-            }
+            // try
+            // {
+            //     var msg = await _protocol.ReceiveMessageAsync(_stream, tokenSource.Token);
+            //     _logger.LogDebug($"Message Received: {msg.Command}");
+            //     return msg;
+            // }
+            // catch (IOException)
+            // {
+            // }
+            // catch (Exception err)
+            // {
+            //     _logger.LogError(err, "Error while receive");
+            //     Disconnect();
+            // }
 
             return null;
         }

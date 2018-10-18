@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using NeoSharp.Core.Logging;
 using NeoSharp.Core.Models;
 using NeoSharp.Core.Persistence;
 
@@ -13,19 +15,28 @@ namespace NeoSharp.Core.Blockchain.Processing
     public class ClaimTransactionPersister: ITransactionPersister<ClaimTransaction>
     {
         private readonly IRepository _repository;
+        private readonly ILogger<ClaimTransactionPersister> _logger;
 
-        public ClaimTransactionPersister(IRepository repository)
+        public ClaimTransactionPersister(IRepository repository, ILogger<ClaimTransactionPersister> logger)
         {
-            _repository = repository;
+            this._repository = repository;
+            this._logger = logger;
         }
 
         public async Task Persist(ClaimTransaction transaction)
         {
-            foreach (var prevHashClaim in transaction.Claims.GroupBy(c => c.PrevHash))
+            try
             {
-                var coinStates = await _repository.GetCoinStates(prevHashClaim.Key);
-                foreach (var reference in prevHashClaim) coinStates[reference.PrevIndex] |= CoinState.Claimed;
-                await _repository.AddCoinStates(prevHashClaim.Key, coinStates);
+                foreach (var prevHashClaim in transaction.Claims.GroupBy(c => c.PrevHash))
+                {
+                    var coinStates = await _repository.GetCoinStates(prevHashClaim.Key);
+                    foreach (var reference in prevHashClaim) coinStates[reference.PrevIndex] |= CoinState.Claimed;
+                    await _repository.AddCoinStates(prevHashClaim.Key, coinStates);
+                }
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, $"Error persisting a claim transaction");
             }
         }
     }

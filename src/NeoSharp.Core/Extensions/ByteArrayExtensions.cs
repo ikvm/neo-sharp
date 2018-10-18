@@ -1,6 +1,7 @@
 ﻿using System;
 using NeoSharp.Cryptography;
 using NeoSharp.Types;
+using NeoSharp.Types.ExtensionMethods;
 
 namespace NeoSharp.Core.Extensions
 {
@@ -80,25 +81,9 @@ namespace NeoSharp.Core.Extensions
             return result;
         }
 
-        ///// <summary>
-        ///// Convert to Hex String
-        ///// </summary>
-        ///// <param name="value">Value</param>
-        ///// <param name="append0x">Append 0x hex prefix</param>
-        ///// <returns>String</returns>
-        //public static string ToHexString(this IEnumerable<byte> value, bool append0x = false)
-        //{
-        //    var sb = new StringBuilder();
-
-        //    foreach (var b in value)
-        //        sb.AppendFormat("{0:x2}", b);
-
-        //    if (append0x)
-        //    {
-        //        if (sb.Length > 0) return "0x" + sb.ToString();
-        //    }
-
-        //    return sb.ToString();
-        //}
+        public static uint CalculateChecksum(this byte[] array)
+        {
+            return array.Sha256(0, array.Length).Sha256(0, 32).ToUInt32(0);
+        }
     }
 }

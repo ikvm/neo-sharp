@@ -6,7 +6,7 @@ namespace NeoSharp.Core.Network
     {
         #region Private fields
 
-        private readonly IServer _server;
+        private readonly NewNetwork.INode _server;
 
         #endregion
 
@@ -15,7 +15,7 @@ namespace NeoSharp.Core.Network
         /// </summary>
         /// <param name="logger">Logger</param>
         /// <param name="serverInit">Server</param>
-        public NetworkManager(ILogger<NetworkManager> logger, IServer serverInit)
+        public NetworkManager(ILogger<NetworkManager> logger, NewNetwork.INode serverInit)
         {
             _server = serverInit;
             logger.LogInformation("Network Manager Initialised");

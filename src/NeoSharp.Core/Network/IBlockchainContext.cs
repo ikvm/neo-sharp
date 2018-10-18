@@ -1,4 +1,7 @@
-﻿using NeoSharp.Core.Models;
+﻿using System;
+using System.Collections.Generic;
+using NeoSharp.Core.Models;
+using NeoSharp.Types;
 
 namespace NeoSharp.Core.Network
 {
@@ -11,6 +14,10 @@ namespace NeoSharp.Core.Network
         bool NeedPeerSync { get; }
 
         bool IsSyncing { get; set; }
+
+        IEnumerable<IEnumerable<UInt256>> SyncBlockHeaderBatches { get; set; }
+
+        int CurrentBlockHeaderSyncBatch { get; set; }
 
         bool IsPeerConnected { get; }
 
